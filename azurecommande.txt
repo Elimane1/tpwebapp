@@ -1,0 +1,41 @@
+az group create --name tprecoface --location francecentral
+blobStorageAccount="storageaccounttprec9fb1"
+
+az storage account create --name $blobStorageAccount --location francecentral \
+  --resource-group tprecoface --sku Standard_LRS --kind StorageV2 --access-tier hot
+
+$blobStorageAccount="storageaccounttprec9fb1"
+
+az storage account create --name $blobStorageAccount --location francecentral --resource-group tprecoface --sku Standard_LRS --kind StorageV2 --access-tier hot
+
+$blobStorageAccountKey=$(az storage account keys list -g tprecoface -n $blobStorageAccount --query "[0].value" --output tsv)
+
+az storage container create --name images --account-name $blobStorageAccount --account-key $blobStorageAccountKey
+
+az storage container create --name thumbnails --account-name $blobStorageAccount --account-key $blobStorageAccountKey --public-access container
+
+$blobStorageAccountKey=$(az storage account keys list -g tprecoface 
+  -n $blobStorageAccount --query "[0].value" --output tsv)
+
+az storage container create --name images 
+  --account-name $blobStorageAccount 
+  --account-key $blobStorageAccountKey
+  
+az appservice plan create --name fonctionrecoface --resource-group tprecoface --sku Free
+
+$webapp="tpwebappstatic"
+
+az staticwebapp create -n tpwebappstatic -g tprecoface -s https://github.com/Druidyy/Facial_Reco_Azure.git -l WestUs2 -b master
+  
+az staticwebapp config appsettings set --name $webapp --resource-group tprecoface 
+  --settings AZURE_STORAGE_ACCOUNT_NAME=$blobStorageAccount `
+  AZURE_STORAGE_ACCOUNT_ACCESS_KEY=$blobStorageAccountKey 
+
+az cognitiveservices account keys list \
+--name tprecoface \
+--resource-group tprecoface
+
+key=$(az cognitiveservices account keys list \
+--name tprecoface \
+--resource-group tprecoface \
+--query key1 -o tsv)
